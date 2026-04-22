@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Levelised cost of energy Calculation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 380px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .result {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+  <h2>LCC, CRF & LCOE</h2>
+
+  <label>Initial Cost (₹)</label>
+  <input type="number" id="initial" placeholder="Enter initial cost">
+
+  <label>Annual O&M Cost (₹)</label>
+  <input type="number" id="om" placeholder="Enter yearly O&M">
+
+  <label>Replacement Cost (₹)</label>
+  <input type="number" id="replacement" placeholder="Enter replacement cost">
+
+  <label>Replacement Interval (years)</label>
+  <input type="number" id="interval" placeholder="e.g. 5">
+
+  <label>System Lifetime (years)</label>
+  <input type="number" id="life" placeholder="e.g. 20">
+
+  <label>Discount Rate (%)</label>
+  <input type="number" id="rate" placeholder="e.g. 8">
+
+  <label>Salvage Value (₹)</label>
+  <input type="number" id="salvage" placeholder="Enter salvage value">
+
+  <label>Annual Energy Production (kWh)</label>
+  <input type="number" id="energy" placeholder="e.g. 2000">
+
+  <button onclick="calculate()">Calculate</button>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+function calculate() {
+  let initial = parseFloat(document.getElementById('initial').value) || 0;
+  let om = parseFloat(document.getElementById('om').value) || 0;
+  let replacement = parseFloat(document.getElementById('replacement').value) || 0;
+  let interval = parseFloat(document.getElementById('interval').value) || 0;
+  let life = parseFloat(document.getElementById('life').value) || 0;
+  let rate = parseFloat(document.getElementById('rate').value) / 100 || 0;
+  let salvage = parseFloat(document.getElementById('salvage').value) || 0;
+  let energy = parseFloat(document.getElementById('energy').value) || 0;
+
+  // O&M Cost (discounted)
+  let omCost = 0;
+  for (let t = 1; t <= life; t++) {
+    omCost += om / Math.pow((1 + rate), t);
+  }
+
+  // Replacement Cost (discounted)
+  let replacementCost = 0;
+  if (interval > 0) {
+    for (let t = interval; t < life; t += interval) {
+      replacementCost += replacement / Math.pow((1 + rate), t);
+    }
+  }
+
+  // Salvage Value (discounted)
+  let salvagePV = salvage / Math.pow((1 + rate), life);
+
+  // Total LCC
+  let LCC = initial + omCost + replacementCost - salvagePV;
+
+  // CRF
+  let CRF = (rate * Math.pow(1 + rate, life)) / (Math.pow(1 + rate, life) - 1);
+
+  // Annualized Cost
+  let annualCost = LCC * CRF;
+
+  // LCOE
+  let LCOE = energy > 0 ? (annualCost / energy) : 0;
+
+  document.getElementById('result').innerHTML =
+    "LCC: ₹ " + LCC.toFixed(2) + "<br>" +
+    "CRF: " + CRF.toFixed(4) + "<br>" +
+    "Annualized Cost: ₹ " + annualCost.toFixed(2) + "<br>" +
+    "LCOE: ₹ " + LCOE.toFixed(2) + " / kWh";
+}
+
+</script>
+
+</body>
+
+</html>
